@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Subculture Space</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --bg-image: none;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --border-color: #334155;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body.theme-y2k {
+            --bg-color: #2e1065;
+            --card-bg: rgba(88, 28, 135, 0.7);
+            --text-color: #f472b6;
+            --accent-color: #ec4899;
+            --border-color: #f472b6;
+        }
+
+        body.theme-gothic {
+            --bg-color: #050505;
+            --card-bg: rgba(20, 20, 20, 0.9);
+            --text-color: #d4d4d4;
+            --accent-color: #8b5cf6;
+            --border-color: #404040;
+        }
+
+        body.theme-vaporwave {
+            --bg-color: #3b0764;
+            --card-bg: rgba(126, 34, 206, 0.6);
+            --text-color: #22d3ee;
+            --accent-color: #f43f5e;
+            --border-color: #22d3ee;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            font-family: var(--font-family);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .control-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.2s;
+        }
+        .control-toggle:hover { transform: scale(1.05); }
+
+        .control-panel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 320px;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 2px solid var(--border-color);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            transition: right 0.3s ease;
+            z-index: 999;
+            padding: 30px 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .control-panel.open { right: 0; }
+        .control-panel h2 { margin-top: 0; font-size: 18px; color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .control-group { margin-bottom: 20px; }
+        .control-group label { display: block; font-size: 13px; margin-bottom: 6px; color: #94a3b8; }
+        .control-group input, .control-group select {
+            width: 100%; padding: 8px 12px; background: #1e293b; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; box-sizing: border-box;
+        }
+        .control-group button {
+            width: 100%; padding: 10px; background: var(--accent-color); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;
+        }
+
+        .draggable-card {
+            position: absolute;
+            width: 300px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            cursor: move;
+            user-select: none;
+            z-index: 10;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        .card-close { background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 16px; }
+
+        [contenteditable="true"]:hover {
+            outline: 1px dashed var(--accent-color);
+            cursor: text;
+        }
+        .avatar-box {
+            width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent-color); margin: 0 auto 10px auto;
+        }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .tips {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="theme-y2k">
+
+    <button class="control-toggle" onclick="togglePanel()">⚙️ DIY 控制中心</button>
+    <div class="tips">💡 提示：按住卡片头部可以随意拖拽排版，文字可以直接双击修改！</div>
+
+    <div class="control-panel" id="controlPanel">
+        <h2>🎨 空间自定义</h2>
+        
+        <div class="control-group">
+            <label>切换风格主题</label>
+            <select id="themeSelect" onchange="changeTheme(this.value)">
+                <option value="theme-y2k">💖 Y2K 千禧粉紫</option>
+                <option value="theme-gothic">🦇 暗黑哥特吸血鬼</option>
+                <option value="theme-vaporwave">🌆 蒸汽波赛博风</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>自定义背景图片网址 (URL)</label>
+            <input type="text" id="bgInput" placeholder="粘贴图片网址..." onchange="updateBackground()">
+        </div>
+
+        <div class="control-group">
+            <label>自定义个人头像网址 (URL)</label>
+            <input type="text" id="avatarInput" placeholder="粘贴头像图片网址..." onchange="updateAvatar()">
+        </div>
+
+        <div class="control-group">
+            <button onclick="addNewCard()">➕ 添加新文本卡片</button>
+            <button onclick="saveLayout()" style="background:#10b981; margin-top:10px;">💾 保存我的修改</button>
+            <button onclick="resetLayout()" style="background:#64748b; margin-top:10px;">🔄 重置恢复默认</button>
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div class="draggable-card" id="card-1" style="top: 80px; left: 80px;" onmousedown="initDrag(event, this)">
+            <div class="card-header"><span>📜 我的名片</span><button class="card-close" onclick="closeCard('card-1')">×</button></div>
+            <div class="avatar-box">
+                <img id="userAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" alt="Avatar">
+            </div>
+            <h3 contenteditable="true" style="text-align:center; margin:5px 0;">Your Name</h3>
+            <p contenteditable="true" style="font-size:13px; text-align:center; color:#cbd5e1;">这里写你的个性签名、座右铭或者自我介绍。点字就能改！</p>
+        </div>
+
+        <div class="draggable-card" id="card-2" style="top: 80px; left: 420px;" onmousedown="initDrag(event, this)">
+            <div class="card-header"><span>✨ 喜欢的亚文化</span><button class="card-close" onclick="closeCard('card-2')">×</button></div>
+            <div contenteditable="true" style="font-size:13px; line-height: 1.6;">
+                <p>🖤 Gothic / Dark Academia</p>
+                <p>💫 Y2K / Cyberpunk</p>
+                <p>👾 独立游戏 / 蒸汽波音乐</p>
+                <p>你可以随意在这里补充你喜欢的任何元素、乐队或电影！</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePanel() {
+            document.getElementById('controlPanel').classList.toggle('open');
+        }
+
+        function changeTheme(themeName) {
+            document.body.className = themeName;
+            localStorage.setItem('sub_theme', themeName);
+        }
+
+        function updateBackground() {
+            const url = document.getElementById('bgInput').value;
+            if(url) {
+                document.body.style.backgroundImage = `url('${url}')`;
+                localStorage.setItem('sub_bg', url);
+            }
+        }
+
+        function updateAvatar() {
+            const url = document.getElementById('avatarInput').value;
+            if(url) {
+                document.getElementById('userAvatar').src = url;
+                localStorage.setItem('sub_avatar', url);
+            }
+        }
+
+        function closeCard(cardId) {
+            document.getElementById(cardId).style.display = 'none';
+        }
+
+        let cardCounter = 3;
+        function addNewCard() {
+            const workspace = document.getElementById('workspace');
+            const newCard = document.createElement('div');
+            const cardId = 'card-' + cardCounter++;
+            newCard.className = 'draggable-card';
+            newCard.id = cardId;
+            newCard.style.top = (100 + cardCounter * 20) + 'px';
+            newCard.style.left = (100 + cardCounter * 20) + 'px';
+            newCard.onmousedown = (e) => initDrag(e, newCard);
+            
+            newCard.innerHTML = `
+                <div class="card-header"><span>📌 新随笔框</span><button class="card-close" onclick="closeCard('${cardId}')">×</button></div>
+                <div contenteditable="true" style="font-size:13px;">点击这里输入你想写的新内容、心情或便签...</div>
+            `;
+            workspace.appendChild(newCard);
+        }
+
+        let activeCard = null;
+        let startX, startY, initialX, initialY;
+
+        function initDrag(e, card) {
+            if (['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(e.target.tagName) || e.target.getAttribute('contenteditable') === 'true') {
+                return;
+            }
+            activeCard = card;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = card.offsetLeft;
+            initialY = card.offsetTop;
+
+            document.addEventListener('mousemove', dragCard);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function dragCard(e) {
+            if (!activeCard) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            activeCard.style.left = (initialX + dx) + 'px';
+            activeCard.style.top = (initialY + dy) + 'px';
+        }
+
+        function stopDrag() {
+            activeCard = null;
+            document.removeEventListener('mousemove', dragCard);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        function saveLayout() {
+            localStorage.setItem('sub_workspaceHTML', document.getElementById('workspace').innerHTML);
+            alert('✨ 空间排版与内容已成功保存到你的浏览器！');
+        }
+
+        window.onload = function() {
+            if(localStorage.getItem('sub_workspaceHTML')) {
+                document.getElementById('workspace').innerHTML = localStorage.getItem('sub_workspaceHTML');
+                const cards = document.querySelectorAll('.draggable-card');
+                cards.forEach(card => {
+                    card.onmousedown = (e) => initDrag(e, card);
+                });
+            }
+            if(localStorage.getItem('sub_theme')) {
+                const savedTheme = localStorage.getItem('sub_theme');
+                document.body.className = savedTheme;
+                document.getElementById('themeSelect').value = savedTheme;
+            }
+            if(localStorage.getItem('sub_bg')) {
+                const savedBg = localStorage.getItem('sub_bg');
+                document.body.style.backgroundImage = `url('${savedBg}')`;
+                document.getElementById('bgInput').value = savedBg;
+            }
+            if(localStorage.getItem('sub_avatar')) {
+                const savedAvatar = localStorage.getItem('sub_avatar');
+                document.getElementById('userAvatar').src = savedAvatar;
+                document.getElementById('avatarInput').value = savedAvatar;
+            }
+        };
+
+        function resetLayout() {
+            if(confirm('确定要恢复默认吗？所有的自定义修改会清空。')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
